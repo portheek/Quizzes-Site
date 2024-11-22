@@ -1,6 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.JsonWebTokens;
+using QuizAPI.Auth.Model;
 using QuizAPI.Data;
 using QuizAPI.Data.Entities;
+using System.Net.Http;
+using System.Security.Claims;
 
 namespace QuizAPI.Endpoints
 {
@@ -8,7 +14,7 @@ namespace QuizAPI.Endpoints
     {
         public static void MapQuestionsEndpoints(this WebApplication app)
         {
-            // Get all questions from a quic
+            // Get all questions from a quiz
             app.MapGet("/quizzes/{quizId}/questions", async (QuizDbContext db, int quizId) =>
             {
                 var quiz = await db.Quizzes.FirstOrDefaultAsync(q  => q.Id == quizId);
@@ -47,7 +53,7 @@ namespace QuizAPI.Endpoints
             .WithOpenApi();
             
             // Create a question for a quiz
-            app.MapPost("/quizzes/{quizId}/questions", async (QuizDbContext db, int quizId, Question q) =>
+            app.MapPost("/quizzes/{quizId}/questions", [Authorize(Roles = QuizRoles.QuizUser)] async (QuizDbContext db, int quizId, Question q, HttpContext httpContext) =>
             {
                 var quiz = await db.Quizzes.FirstOrDefaultAsync(q => q.Id == quizId);
 
@@ -56,10 +62,16 @@ namespace QuizAPI.Endpoints
                     return Results.NotFound();
                 }
 
+                if (!httpContext.User.IsInRole(QuizRoles.Admin) &&
+                    httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub) != quiz.UserId)
+                {
+                    return Results.Forbid();
+                }
+
                 var question = new Question
                 {
                     QuestionText = q.QuestionText,
-                    Quiz_id = quizId,
+                    Quiz_id = quizId
                 };
 
                 db.Questions.Add(question);
@@ -74,13 +86,21 @@ namespace QuizAPI.Endpoints
             .WithOpenApi();
 
             // Update question
-            app.MapPut("/quizzes/{quizId}/questions/{questionId}", async (QuizDbContext db, int quizId, int questionId, Question q) =>
+            app.MapPut("/quizzes/{quizId}/questions/{questionId}", [Authorize(Roles = QuizRoles.QuizUser)] async (QuizDbContext db, int quizId, int questionId, Question q, HttpContext httpContext) =>
             {
                 var question = await db.Questions.FirstOrDefaultAsync(q => q.Id == questionId && q.Quiz_id == quizId);
 
                 if (question == null)
                 {
                     return Results.NotFound();
+                }
+
+                var quiz = await db.Quizzes.FirstOrDefaultAsync(q => q.Id == quizId);
+
+                if (!httpContext.User.IsInRole(QuizRoles.Admin) &&
+                    httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub) != quiz.UserId)
+                {
+                    return Results.Forbid();
                 }
 
                 question.QuestionText = q.QuestionText;
@@ -96,13 +116,20 @@ namespace QuizAPI.Endpoints
             .WithOpenApi();
 
             // Delete quiz
-            app.MapDelete("/quizzes/{quizId}/questions/{questionId}", async (QuizDbContext db, int quizId, int questionId) =>
+            app.MapDelete("/quizzes/{quizId}/questions/{questionId}", [Authorize(Roles = QuizRoles.QuizUser)] async (QuizDbContext db, int quizId, int questionId, HttpContext httpContext) =>
             {
                 var question = await db.Questions.FirstOrDefaultAsync(q => q.Id == questionId && q.Quiz_id == quizId);
 
                 if (question == null)
                 {
                     return Results.NotFound();
+                }
+
+                var quiz = await db.Quizzes.FirstOrDefaultAsync(q => q.Id == quizId);
+                if (!httpContext.User.IsInRole(QuizRoles.Admin) &&
+                    httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub) != quiz.UserId)
+                {
+                    return Results.Forbid();
                 }
 
                 db.Questions.Remove(question);

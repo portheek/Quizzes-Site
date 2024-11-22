@@ -1,14 +1,17 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using QuizAPI.Auth.Model;
 using QuizAPI.Data.Entities;
 
 namespace QuizAPI.Data
 {
-    public class QuizDbContext : DbContext
+    public class QuizDbContext : IdentityDbContext<QuizUser>
     {
         private readonly IConfiguration _configuration;
         public DbSet<Quiz> Quizzes { get; set; }
         public DbSet<Answer> Answers { get; set; }
         public DbSet<Question> Questions { get; set; }
+        public DbSet<Session> Sessions { get; set; }
 
         public QuizDbContext(IConfiguration configuration)
         {

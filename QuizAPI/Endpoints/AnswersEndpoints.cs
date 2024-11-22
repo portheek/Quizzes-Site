@@ -1,6 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.JsonWebTokens;
+using QuizAPI.Auth.Model;
 using QuizAPI.Data;
 using QuizAPI.Data.Entities;
+using System.Net.Http;
+using System.Security.Claims;
 
 namespace QuizAPI.Endpoints
 {
@@ -49,7 +55,7 @@ namespace QuizAPI.Endpoints
             .WithOpenApi();
             
             // Create an answer
-            app.MapPost("/quizzes/{quizId}/questions/{questionId}/answers", async (QuizDbContext db, int quizId, int questionId, Answer a) =>
+            app.MapPost("/quizzes/{quizId}/questions/{questionId}/answers", [Authorize(Roles = QuizRoles.QuizUser)] async (QuizDbContext db, int quizId, int questionId, Answer a, HttpContext httpContext) =>
             {
                 var quiz = await db.Quizzes.FirstOrDefaultAsync(q => q.Id == quizId);
 
@@ -58,11 +64,17 @@ namespace QuizAPI.Endpoints
                     return Results.NotFound();
                 }
 
+                if (!httpContext.User.IsInRole(QuizRoles.Admin) &&
+                    httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub) != quiz.UserId)
+                {
+                    return Results.Forbid();
+                }
+
                 var Answer = new Answer
                 {
                     Question_Answer = a.Question_Answer,
                     Is_Correct = a.Is_Correct,
-                    Questions_Id = a.Questions_Id,
+                    Questions_Id = a.Questions_Id
                 };
 
                 db.Answers.Add(Answer);
@@ -77,13 +89,21 @@ namespace QuizAPI.Endpoints
             .WithOpenApi();
 
             // Update answer
-            app.MapPut("/quizzes/{quizId}/questions/{questionId}/answers/{answerId}", async (QuizDbContext db, int quizId, int questionId, int answerId, Answer a) =>
+            app.MapPut("/quizzes/{quizId}/questions/{questionId}/answers/{answerId}", [Authorize(Roles = QuizRoles.QuizUser)] async (QuizDbContext db, int quizId, int questionId, int answerId, Answer a, HttpContext httpContext) =>
             {
                 var answer = await db.Answers.FirstOrDefaultAsync(a => a.Questions_Id == questionId && a.Id == answerId);
 
                 if (answer == null)
                 {
                     return Results.NotFound();
+                }
+
+                var quiz = await db.Quizzes.FirstOrDefaultAsync(q => q.Id == quizId);
+
+                if (!httpContext.User.IsInRole(QuizRoles.Admin) &&
+                    httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub) != quiz.UserId)
+                {
+                    return Results.Forbid();
                 }
 
                 answer.Question_Answer = a.Question_Answer;
@@ -100,13 +120,20 @@ namespace QuizAPI.Endpoints
             .WithOpenApi();
 
             // Delete answer
-            app.MapDelete("/quizzes/{quizId}/questions/{questionId}/answers/{answerId}", async (QuizDbContext db, int quizId, int questionId, int answerId) =>
+            app.MapDelete("/quizzes/{quizId}/questions/{questionId}/answers/{answerId}", [Authorize(Roles = QuizRoles.QuizUser)] async (QuizDbContext db, int quizId, int questionId, int answerId, HttpContext httpContext) =>
             {
                 var answer = await db.Answers.FirstOrDefaultAsync(a => a.Questions_Id == questionId && a.Id == answerId);
 
                 if (answer == null)
                 {
                     return Results.NotFound();
+                }
+
+                var quiz = await db.Quizzes.FirstOrDefaultAsync(q => q.Id == quizId);
+                if (!httpContext.User.IsInRole(QuizRoles.Admin) &&
+                    httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub) != quiz.UserId)
+                {
+                    return Results.Forbid();
                 }
 
                 db.Answers.Remove(answer);
