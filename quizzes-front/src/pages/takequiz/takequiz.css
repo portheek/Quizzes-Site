@@ -1,0 +1,21 @@
+.btnmargin {
+    margin-left: 0.5em;
+}
+
+.quiz-li{
+    border: 1px solid grey;
+    
+}
+
+.quiz-li:hover{
+    background-color: rgb(238, 255, 231);
+    
+}
+
+.quiz-input{
+    margin-left: 0.1em;
+}
+
+.quiz-label{
+    margin-left: 2em;
+}
