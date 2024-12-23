@@ -13,17 +13,47 @@ namespace QuizAPI.Endpoints
     {
         public static void MapQuizEndpoints(this WebApplication app)
         {
-            // Get all quizzes
             app.MapGet("/quizzes", async (QuizDbContext db) =>
             {
-                var quizzes = await db.Quizzes
-                                     .ToListAsync();
+                var quizzes = await (from q in db.Quizzes
+                                     join u in db.Users on q.UserId equals u.Id
+                                     select new
+                                     {
+                                         q.Id,
+                                         q.Title,
+                                         q.Description,
+                                         q.Creation_Date,
+                                         UserName = u.UserName
+                                     }).ToListAsync();
                 return Results.Ok(quizzes);
             })
             .WithName("GetAllQuizzes")
             .WithDescription("Gets all quizzes.")
-            .Produces<Quiz>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status200OK)
             .WithOpenApi();
+
+            // Get all quizzes from specific user
+            app.MapGet("/quizzes/byUser/{userId}", async (string userId, QuizDbContext db) =>
+            {
+                var quizzes = await db.Quizzes
+                                     .Where(q => q.UserId == userId)
+                                     .Select(q => new
+                                     {
+                                         q.Id,
+                                         q.Title,
+                                         q.Description,
+                                         q.Creation_Date
+                                     })
+                                     .ToListAsync();
+                return Results.Ok(quizzes);
+            })
+            .WithName("GetQuizzesByUser")
+            .WithDescription("Gets all quizzes created by a specific user.")
+            .Produces(StatusCodes.Status200OK)
+            .WithOpenApi();
+
+
+
 
             // Get a specific quiz
             app.MapGet("/quizzes/{quizId}", async (QuizDbContext db, int quizId) =>

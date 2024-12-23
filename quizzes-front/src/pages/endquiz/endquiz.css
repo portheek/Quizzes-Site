@@ -1,0 +1,10 @@
+.correct-answer {
+    background-color: #d4edda;
+  }
+  .incorrect-answer {
+    background-color: #edd4d4;
+  }
+  .user-answer {
+    font-weight: bold;
+  }
+  

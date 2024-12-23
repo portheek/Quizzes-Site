@@ -13,7 +13,6 @@ namespace QuizAPI.Data.Entities
 
         [Required]
         public required string UserId { get; set; }
-        public QuizUser User { get; set; }
 
     }
 }

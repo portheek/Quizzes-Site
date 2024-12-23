@@ -3,27 +3,54 @@ import logo from "./logo.svg";
 import QuizHeading from "../quizheading";
 import { Link } from "react-router-dom";
 import { logout } from "../../services/authService";
+import { getAllQuizzes } from "../../services/apiService";
+import React, { useEffect, useState } from "react";
 
 function Jumbotron() {
-  const content = `Donec id elit non mi porta gravida at eget metus. Fusce dapibus,
-              tellus ac cursus commodo, tortor mauris condimentum nibh, ut
-              fermentum massa justo sit amet risus. Etiam porta sem malesuada
-              magna mollis euismod. Donec sed odio dui.`;
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [quizzes, setQuizzes] = useState([]);
 
-  const userName = localStorage.getItem("username");
-  var loggedIn = false;
-  if (userName) {
-    loggedIn = true;
-  }
+  useEffect(() => {
+    const userName = localStorage.getItem("username");
+    if (userName) {
+      setLoggedIn(true);
+    }
+
+    const fetchQuizzes = async () => {
+      try {
+        const quizData = await getAllQuizzes();
+        setQuizzes(quizData);
+      } catch (error) {
+        console.error('Failed to fetch quizzes:', error);
+      }
+    };
+
+    fetchQuizzes();
+  }, []);
 
   const handleLogout = async (e) => {
     e.preventDefault();
     try {
-      if (logout()) {
-        loggedIn = false;
-      }
-    } catch {}
+      await logout();
+      setLoggedIn(false);
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
   };
+
+  const shuffleArray = (array) => {
+    return array.sort(() => Math.random() - 0.5);
+  };
+
+  const getRandomQuizzes = () => {
+    if (!quizzes || quizzes.length === 0) {
+      return [];
+    }
+    const shuffledQuizzes = shuffleArray([...quizzes]);
+    return shuffledQuizzes.slice(0, 3);
+  };
+
+  const randomQuizzes = getRandomQuizzes();
 
   return (
     <main role="main jcontainer">
@@ -38,7 +65,7 @@ function Jumbotron() {
               <h2>Viktorinų kūrimo ir atsakinėjimo svetainė.</h2>
               {loggedIn ? (
                 <>
-                  <p>Prisijungęs vartotojas: {userName}</p>
+                  <p>Prisijungęs vartotojas: {localStorage.getItem("username")}</p>
                   <p className="mt-3">
                     <a
                       className="btn btn-danger btn-lg"
@@ -96,9 +123,9 @@ function Jumbotron() {
 
       <div className="container">
         <div className="row">
-          <QuizHeading title="Heading" content={content} />
-          <QuizHeading title="Heading" content={content} />
-          <QuizHeading title="Heading" content={content} />
+          {randomQuizzes.map((quiz) => (
+            <QuizHeading key={quiz.id} id={quiz.id} title={quiz.title} content={quiz.description} />
+          ))}
         </div>
         <Link to="/quizzes">
           <div className="d-grid gap-2 ">

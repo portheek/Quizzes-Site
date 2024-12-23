@@ -7,6 +7,8 @@ import EndQuizPage from "../pages/endquiz";
 import TakeQuizPage from "../pages/takequiz";
 import MyQuizzesPage from "../pages/myquizzes";
 import EditQuizPage from "../pages/editquiz";
+import AddQuizPage from "../pages/addquiz";
+import QuizQuestionsEditPage from "../pages/editquestions";
 
 function App() {
   return (
@@ -18,10 +20,12 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/quizzes" element={<QuizzesPage />} />
-        <Route path="/takequiz" element={<TakeQuizPage />} />
+        <Route path="/takequiz/:id" element={<TakeQuizPage />} />
         <Route path="/endquiz" element={<EndQuizPage />} />
         <Route path="/myquizzes" element={<MyQuizzesPage />} />
-        <Route path="/editquiz" element={<EditQuizPage />} />
+        <Route path="/editquiz/:id" element={<EditQuizPage />} />
+        <Route path="/addquiz" element={<AddQuizPage />} />
+        <Route path="/editquestions/:id" element={<QuizQuestionsEditPage />} />
         </Routes>
       </BrowserRouter>
  

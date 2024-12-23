@@ -5,11 +5,7 @@ function NavBar() {
   return (
     <>
       <nav className="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
-        <Link to="/home">
-          <a className="navbar-brand" href="#">
-            Quizz Site
-          </a>
-        </Link>
+        <Link className="navbar-brand" to="/home">Quiz Site</Link>
         <button
           className="navbar-toggler"
           type="button"
@@ -24,24 +20,13 @@ function NavBar() {
 
         <div className="collapse navbar-collapse" id="navbarsExampleDefault">
           <ul className="navbar-nav mr-auto">
-            <li className="nav-item ">
-              <Link to="/home">
-                <a className="nav-link" href="#">
-                  Pagrindinis
-                </a>
-              </Link>
+            <li className="nav-item">
+              <Link className="nav-link" to="/home">Pagrindinis</Link>
             </li>
-            <li className="nav-item ">
-              <Link to="/quizzes">
-                <a className="nav-link" href="#">
-                  Viktorinos
-                </a>
-              </Link>
+            <li className="nav-item">
+              <Link className="nav-link" to="/quizzes">Viktorinos</Link>
             </li>
-            
-            
           </ul>
-
         </div>
       </nav>
     </>
